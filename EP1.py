@@ -67,11 +67,17 @@ def calc_theta2_2dot(theta1,theta2,theta1_dot,theta2_dot,theta1_2dotvar,B):
     return ((B[1](theta1,theta2)*theta1_2dotvar+B[2](theta1,theta2)*theta1_dot**2+B[3](theta1,theta2)*theta2_dot+B[4](theta1,theta2))/B[0](theta1,theta2))
 
 
-# def euler(MatrizTd, h):
+def eulerMethod(MatrizTd, h, n, A, B):
 
-#     for i in range(n-1):
-#         MatrizTd.variaveis(i+1) = MatrizTd.variaveis(i)+h*MatrizTd.derivadas(i)
+    for k in range(n-1):
+        theta1_2dot = calc_theta1_2dot(MatrizTd.theta1(k),MatrizTd.theta2(k),MatrizTd.theta1_dot(k),MatrizTd.theta2_dot(k),A)
+        MatrizTd.set_theta1_2dot(theta1_2dot,k)
+        theta2_2dot = calc_theta2_2dot(MatrizTd.theta1(k),MatrizTd.theta2(k),MatrizTd.theta1_dot(k),MatrizTd.theta2_dot(k),theta1_2dot,B)
+        MatrizTd.set_theta2_2dot(theta2_2dot,k)
 
+        proxIterVar = np.add(MatrizTd.variaveis(k),np.multiply(MatrizTd.derivadas(k),h))
+        # proxIterVar = MatrizTd.variaveis(k)+h*MatrizTd.derivadas(k)
+        MatrizTd.set_variaveis(proxIterVar,k+1)
 
 def rungeKutta2(Mtd,h,n,A,B):
     def kx(theta1_dot):
@@ -92,8 +98,8 @@ def rungeKutta2(Mtd,h,n,A,B):
         theta1_2dot = calc_theta1_2dot(theta1,theta2,theta1_dot,theta2_dot,A)
         theta2_2dot = calc_theta2_2dot(theta1,theta2,theta1_dot,theta2_dot,theta1_2dot,B)
         
-        Mtd.set_theta1_2dot(theta1_2dot)
-        Mtd.set_theta2_2dot(theta2_2dot)
+        Mtd.set_theta1_2dot(theta1_2dot,k)
+        Mtd.set_theta2_2dot(theta2_2dot,k)
 
         ####### Calculo de #1
         ############## K1
@@ -108,39 +114,87 @@ def rungeKutta2(Mtd,h,n,A,B):
         ############## K2
         k2 = kx(theta1_dot+h*l1)
         ############## L2
-        l2 = lx(theta1+h*k1,theta2+h*m1,theta1_dot+h*l1,theta2_dot*n1)
+        l2 = lx(theta1+h*k1,theta2+h*m1,theta1_dot+h*l1,theta2_dot+h*n1)
         ############## M2
-        m2 = mx(theta2_dot+n1)
+        m2 = mx(theta2_dot+h*n1)
         ############## N2
-        n2 = nx(theta1+h*k1,theta2+h*m1,theta1_dot+h*l1,theta2_dot*n1,l2)
+        n2 = nx(theta1+h*k1,theta2+h*m1,theta1_dot+h*l1,theta2_dot+h*n1,l2)
         
         ############CALCULO PROXIMA ITERAÇÃO
         
-        somas = np.array([(k1+k2)/2,(m1+m2)/2,(l1+l2)/2],(n1+n2)/2)
+        somas = np.array([(k1+k2)/2,(m1+m2)/2,(l1+l2)/2,(n1+n2)/2])
 
         proxIterVar = np.add(Mtd.variaveis(k),np.multiply(somas,h))
         Mtd.set_variaveis(proxIterVar,k+1)
+
+def rungeKutta4(Mtd,h,n,A,B):
+    def kx(theta1_dot):
+        return theta1_dot
+
+    def lx(theta1,theta2,theta1_dot,theta2_dot):
+        return calc_theta1_2dot(theta1,theta2,theta1_dot,theta2_dot,A)
+    
+    def mx(theta2_dot):
+        return theta2_dot
+
+    def nx(theta1,theta2,theta1_dot,theta2_dot,theta1_2dotvar):
+        return calc_theta2_2dot(theta1,theta2,theta1_dot,theta2_dot,theta1_2dotvar,B)
+    
+    for k in range(n-1):
+        [theta1,theta2,theta1_dot,theta2_dot] = Mtd.variaveis(k)
+
+        theta1_2dot = calc_theta1_2dot(theta1,theta2,theta1_dot,theta2_dot,A)
+        theta2_2dot = calc_theta2_2dot(theta1,theta2,theta1_dot,theta2_dot,theta1_2dot,B)
+        
+        Mtd.set_theta1_2dot(theta1_2dot,k)
+        Mtd.set_theta2_2dot(theta2_2dot,k)
+
+        ####### Calculo de #1
+        ############## K1
+        k1 = kx(theta1_dot)
+        ############## L1
+        l1 = theta1_2dot
+        ############## M1
+        m1 = mx(theta2_dot)
+        ############## N1
+        n1 = theta2_2dot
+        ####### Calculo de #2
+        ############## K2
+        k2 = kx(theta1_dot+(h/2)*l1)
+        ############## L2
+        l2 = lx(theta1+(h/2)*k1,theta2+(h/2)*m1,theta1_dot+(h/2)*l1,theta2_dot+(h/2)*n1)
+        ############## M2
+        m2 = mx(theta2_dot+(h/2)*n1)
+        ############## N2
+        n2 = nx(theta1+(h/2)*k1,theta2+(h/2)*m1,theta1_dot+(h/2)*l1,theta2_dot+(h/2)*n1,l2)
+        
         ####### Calculo de #3
 
         ############## K3
-        
+        k3 = kx(theta1_dot+(h/2)*l2)
         ############## L3
-
+        l3 = lx(theta1+(h/2)*k2,theta2+(h/2)*m2,theta1_dot+(h/2)*l2,theta2_dot+(h/2)*n2)    
         ############## M3
-
+        m3 = mx(theta2_dot+(h/2)*n2)
         ############## N3
-
+        n3 = nx(theta1+(h/2)*k2,theta2+(h/2)*m2,theta1_dot+(h/2)*l2,theta2_dot+(h/2)*n2,l3)
         ####### Calculo de #4
-
+        
         ############## K4
-
+        k4 = kx(theta1_dot+h*l3)
         ############## L4
-
+        l4 = lx(theta1+h*k3,theta2+h*m3,theta1_dot+h*l3,theta2_dot+h*n3)
         ############## M4
-
+        m4 = mx(theta2_dot+h*n3)
         ############## N4
+        n4 = nx(theta1+h*k3,theta2+h*m3,theta1_dot+h*l3,theta2_dot+h*n3,l4)
+        
+        ############CALCULO PROXIMA ITERAÇÃO
+        
+        somas = np.array([(k1+2*k2+2*k3+k4)/6,(m1+2*m2+2*m3+m4)/6,(l1+2*l2+2*l3+l4)/6,(n1+2*n2+2*n3+n4)/6])
 
-
+        proxIterVar = np.add(Mtd.variaveis(k),np.multiply(somas,h))
+        Mtd.set_variaveis(proxIterVar,k+1)
 
 
 def criaConstEqMov():
@@ -175,19 +229,41 @@ def criaConstEqMov():
     for i in range(11):
         temp = simplify(array[0,i])
         array[1,i] = lambdify((theta1,theta2),temp)
-        print(i)
-        print(array[1,i](0,0))
     return array[1,:6],array[1, 6:]
 
 def main():
+    print("Selecione o método que deseja realizar: \n0 - Método de Euler \n1 - RK2 \n2 - RK4")
+    metodo = int(input("Sua escolha: "))
+    h = float(input("Defina o tamanho do passo que será utilizado: "))
     tf = 60
     ti = 0
-    h = 0.01
-    n = (tf-ti)/h
+    n = int((tf-ti)/h)
+    print(n)
+    print(type(n))
     A, B = criaConstEqMov()
     MatrizTd = MatrizTudo(n)
     temp = calc_theta1_2dot(0,0.4,0,-0.1,A)
     MatrizTd.cond_iniciais([0,0.4,0,-0.1,temp,calc_theta2_2dot(0,0.4,0,-0.1,temp,B)])
+
+    if metodo == 0:
+        print("Você selecionou método de Euler com passo %f",h)
+        eulerMethod(MatrizTd,h,n, A, B)
+    
+    elif metodo == 1:
+        rungeKutta2(MatrizTd,h,n,A,B)
+
+    elif metodo == 2:
+        rungeKutta2(MatrizTd,h,n,A,B)
+
+    #############plotagem
+    x = np.linspace(ti,tf,n)
+    plt.figure(1)
+    plt.title('Evolução do theta1')
+    plt.xlabel('tempo(s)')
+    plt.ylabel('theta1 (rad)')
+    plt.plot(x,MatrizTd._matriz[0])
+    plt.show()
+
     
     
     # print(MatrizTd._matriz)
