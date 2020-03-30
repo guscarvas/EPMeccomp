@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.pyplot import subplot
 from sympy import *
+import matplotlib.animation as animation
 #
 #   EULER
 #  [ theta1[k+1], theta2[k+1], x1[k+1], x2[k+1] ] = [ theta1[k], theta2[k], x1[k], x2[k] ] + h*[ x1[k], x2[2], x_dot1[k], x_dot2[k] ]
@@ -232,44 +234,136 @@ def criaConstEqMov():
     return array[1,:6],array[1, 6:]
 
 def main():
+    L1=2
+    L2=2.5
+    L2eixo=1.8
+
+    theta1_i = 0
+    theta2_i = 0
+    theta1dot_i = 0.4
+    theta2dot_i = -0.1
+
     print("Selecione o método que deseja realizar: \n0 - Método de Euler \n1 - RK2 \n2 - RK4")
     metodo = int(input("Sua escolha: "))
     h = float(input("Defina o tamanho do passo que será utilizado: "))
     tf = 60
     ti = 0
     n = int((tf-ti)/h)
-    print(n)
-    print(type(n))
     A, B = criaConstEqMov()
     MatrizTd = MatrizTudo(n)
-    temp = calc_theta1_2dot(0,0.4,0,-0.1,A)
-    MatrizTd.cond_iniciais([0,0.4,0,-0.1,temp,calc_theta2_2dot(0,0.4,0,-0.1,temp,B)])
+    temp = calc_theta1_2dot(theta1_i,theta2_i,theta1dot_i,theta2dot_i,A)
+    MatrizTd.cond_iniciais([theta1_i,theta2_i,theta1dot_i,theta2dot_i,temp,calc_theta2_2dot(theta1_i,theta2_i,theta1dot_i,theta2dot_i,temp,B)])
 
     if metodo == 0:
-        print("Você selecionou método de Euler com passo %f",h)
+        print("Você selecionou método de Euler com passo",h)
         eulerMethod(MatrizTd,h,n, A, B)
-    
+        textoGrafico = 'Euler'
+
     elif metodo == 1:
         rungeKutta2(MatrizTd,h,n,A,B)
+        textoGrafico = 'Euler Modificado/RK2'
 
     elif metodo == 2:
         rungeKutta2(MatrizTd,h,n,A,B)
+        textoGrafico = 'RK4'
 
-    #############plotagem
-    x = np.linspace(ti,tf,n)
+    ############ Inicio plotagem e Animação
+    t = np.linspace(ti,tf,n) #vetor tempo
+    
+
     plt.figure(1)
-    plt.title('Evolução do theta1')
+    plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=None, hspace=0.45)
+    subplot(3,2,1)
+    plt.title(r"${\Theta}_1$ para "+textoGrafico+ " com passo " + str(h))
+    plt.xlabel('t (s)')
+    # plt.ylabel('theta1 (rad)')
+    plt.ylabel(r"${\Theta}_1$[rad]")
+    plt.plot(t,MatrizTd._matriz[0])
+    
+    subplot(3,2,2)
+    plt.title(r"${\Theta}_2$ para "+textoGrafico+ " com passo " + str(h))
+    plt.xlabel('t (s)')
+    plt.ylabel(r"${\Theta}_2$[rad]")
+    plt.plot(t,MatrizTd._matriz[1])
+    
+    subplot(3,2,3)
+    plt.title(r"$\dot{\Theta}_1$ para "+textoGrafico+ " com passo " + str(h))
     plt.xlabel('tempo(s)')
-    plt.ylabel('theta1 (rad)')
-    plt.plot(x,MatrizTd._matriz[0])
+    plt.ylabel(r"$\dot{\Theta}_1$[rad/s]")
+    plt.plot(t,MatrizTd._matriz[2])
+    
+    subplot(3,2,4)
+    plt.title(r"$\dot{\Theta}_2$ para "+textoGrafico+ " com passo " + str(h))
+    plt.xlabel('tempo(s)')
+    plt.ylabel(r"$\dot{\Theta}_2$[rad/s]")
+    plt.plot(t,MatrizTd._matriz[3])
+    
+    subplot(3,2,5)
+    plt.title(r"$\ddot{\Theta}_1$ para "+textoGrafico+ " com passo " + str(h))
+    plt.xlabel('tempo(s)')
+    plt.ylabel(r"$\ddot{\Theta}_1[rad/s^2]$")
+    plt.plot(t,MatrizTd._matriz[4])
+    
+    subplot(3,2,6)
+    plt.title(r"$\ddot{\Theta}_2$ para "+textoGrafico+ " com passo " + str(h))
+    plt.xlabel('tempo(s)')
+    plt.ylabel(r"$\ddot{\Theta}_2$[rad/s^2]$")
+    plt.plot(t,MatrizTd._matriz[5])
+
+    x1 = L1*np.sin(MatrizTd._matriz[0])
+    y1 = -L1*np.cos(MatrizTd._matriz[0])
+
+    x1rodaEsquerda = 0.75*np.cos(MatrizTd._matriz[0]) + x1
+    y1rodaEsquerda = 0.75*np.sin(MatrizTd._matriz[0]) + y1
+    x1rodaDireita = -0.75*np.cos(MatrizTd._matriz[0]) + x1
+    y1rodaDireita = -0.75*np.sin(MatrizTd._matriz[0]) + y1
+    
+    x2 = L2eixo*np.sin(MatrizTd._matriz[1]) + x1
+    y2 = -L2eixo*np.cos(MatrizTd._matriz[1]) + y1
+
+    x2rodaEsquerda = 0.75*np.cos(MatrizTd._matriz[1]) + x2
+    y2rodaEsquerda = 0.75*np.sin(MatrizTd._matriz[1]) + y2
+    x2rodaDireita = -0.75*np.cos(MatrizTd._matriz[1]) + x2
+    y2rodaDireita = -0.75*np.sin(MatrizTd._matriz[1]) + y2
+
+    x2eixo = L2*np.sin(MatrizTd._matriz[1]) + x1
+    y2eixo = -L2*np.cos(MatrizTd._matriz[1]) + y1
+
+    fig = plt.figure(2)
+    ax = fig.add_subplot(111, autoscale_on=False, xlim=(-5, 5), ylim=(-6, 0))
+    ax.grid()
+
+    line, = ax.plot([], [], 'o-', lw=2)
+    time_template = 'time = %.1fs'
+    time_text = ax.text(0.05, 0.9, '', transform=ax.transAxes)
+
+    def init():
+        line.set_data([], [])
+        time_text.set_text('')
+        return line, time_text
+
+
+    def animate(i):
+        thisx = [0, x1[i],x1rodaDireita[i],x1rodaEsquerda[i],x1[i], 
+                x2[i], x2rodaDireita[i], x2rodaEsquerda[i], x2[i], x2eixo[i]]
+        thisy = [0, y1[i],y1rodaDireita[i],y1rodaEsquerda[i],y1[i], y2[i],y2rodaDireita[i], y2rodaEsquerda[i], y2[i], y2eixo[i]]
+
+        line.set_data(thisx, thisy)
+        time_text.set_text(time_template % (t[i]))
+        return line, time_text
+    
+
+    # ani = animation.FuncAnimation(fig, animate, np.arange(1, len(t)),
+    #                           interval=0.005, blit=True, init_func=init)
+
+    ani = animation.FuncAnimation(fig, animate, np.arange(1, len(t)),
+                              interval=5, blit=True, init_func=init)
+
+    
+    # ani.save('Ep1.mp4', fps=15)
+
     plt.show()
 
     
     
-    # print(MatrizTd._matriz)
-    # theta1 = np.zeros(n)
-    # theta2 = np.zeros(n)
-    # X1 = np.zeros(n)
-    # X2 = np.zeros(n)
-
 main()
