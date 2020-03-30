@@ -1,53 +1,85 @@
+############################################################
+######## EP1 DE MECANICA COMPUTACIONAL - PMR3401
+# ##### ALUNOS:
+# Gustavo Correia Neves Carvas - NUSP 10335962
+# Luana Marsano da Costa Nunes - NUSP 10333640
+#
+############################################################
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import subplot
 from sympy import *
 import matplotlib.animation as animation
-#
-#   EULER
-#  [ theta1[k+1], theta2[k+1], x1[k+1], x2[k+1] ] = [ theta1[k], theta2[k], x1[k], x2[k] ] + h*[ x1[k], x2[2], x_dot1[k], x_dot2[k] ]
-#
-#
 
+
+
+
+######## Classe que servirá para guardar todas as variavéis que utilizaremos para fazer contas e para a plotagem dos gráficos 
 class MatrizTudo(object): 
+
     def __init__(self, n,*args, **kwargs):
-       self._matriz = np.zeros((6,n))
-        # super(MatrizTudo, self).__init__(*args, **kwargs)
-    
+        # Matriz de dimensão 6 x n, uma linha para cada variável,nesta ordem:
+        # theta1
+        # theta2
+        # theta1_dot
+        # theta2_dot
+        # theta1_2dot
+        # theta2_2dot
+        #
+        # O tamanho n é definido pelo tempo que a simulação vai ocorrer dividido pelo passo
+        self._matriz = np.zeros((6,n))
+        
+
     def variaveis(self, k):
+        # Função que retorna o vetor [ theta1, theta2, theta1_dot, theta2_dot ] na posição k (iteração)
         return self._matriz[0:4,k]
 
     def set_variaveis(self,array, k):
+        # Função para definir os valores do vetor [ theta1, theta2, theta1_dot, theta2_dot ] na posição k (iteração)
+        # Utilizada para guardar os valores de k+1 nas contas de cada um dos métodos
         self._matriz[0:4,k] = array
     
     def derivadas(self, k):
+        # Função que retorna o vetor [ theta1_dot, theta2_dot, theta1_2dot, theta2_2dot ] na posição k (iteração)
+        # Utilizada no método Euler para simplificação da conta
         return self._matriz[2:6,k]
     
     def cond_iniciais(self,array):
+        # Função utilizada no inicio do programa para setar a primeira coluna de variaveis, ou seja, condições iniciais
         self._matriz[:,0] = array
 
     def theta1(self,k):
+        # Função retorna a variavel theta1 na posição k
         return self._matriz[0,k]
 
     def theta2(self,k):
+        # Função retorna a variavel theta2 na posição k
         return self._matriz[1,k]
 
     def theta1_dot(self,k):
+        # Função retorna a variavel theta1_dot na posição k
         return self._matriz[2,k]
 
     def theta2_dot(self,k):
+        # Função retorna a variavel theta2_dot na posição k
         return self._matriz[3,k]
 
     def theta1_2dot(self,k):
+        # Função retorna a variavel theta1_2dot na posição k
         return self._matriz[4,k]
 
     def set_theta1_2dot(self,value,k):
+        # Função guarda o valor da variavel theta1_2dot na posição k
+        # Utilizado para guardar os valores calculados em cada iteração, com o intuito de permitir a plotagem dos gráficos
         self._matriz[4,k] = value
 
     def theta2_2dot(self,k):
+        # Função retorna a variavel theta2_2dot na posição k
         return self._matriz[5,k]
 
     def set_theta2_2dot(self,value,k):
+        # Função guarda o valor da variavel theta2_2dot na posição k
+        # Utilizado para guardar os valores calculados em cada iteração, com o intuito de permitir a plotagem dos gráficos
         self._matriz[5,k] = value
 
 
@@ -82,6 +114,8 @@ def eulerMethod(MatrizTd, h, n, A, B):
         MatrizTd.set_variaveis(proxIterVar,k+1)
 
 def rungeKutta2(Mtd,h,n,A,B):
+    # Definição das funções que serão utilizadas para calcular os parametros do método RK
+
     def kx(theta1_dot):
         return theta1_dot
 
@@ -94,12 +128,16 @@ def rungeKutta2(Mtd,h,n,A,B):
     def nx(theta1,theta2,theta1_dot,theta2_dot,theta1_2dotvar):
         return calc_theta2_2dot(theta1,theta2,theta1_dot,theta2_dot,theta1_2dotvar,B)
     
+    # Inicio loop que aplicará o algoritmo do método
     for k in range(n-1):
+        # Inicializando variaveis dessa iteração com nomes mais intuitivos para utilização de inputs nas funções
         [theta1,theta2,theta1_dot,theta2_dot] = Mtd.variaveis(k)
 
+        # Calculo das segundas derivadas que serão utilizadas nas funções dessa iteração
         theta1_2dot = calc_theta1_2dot(theta1,theta2,theta1_dot,theta2_dot,A)
         theta2_2dot = calc_theta2_2dot(theta1,theta2,theta1_dot,theta2_dot,theta1_2dot,B)
         
+        # Armazenamento das segundas derivadas para permitir a plotagem das mesmas no final
         Mtd.set_theta1_2dot(theta1_2dot,k)
         Mtd.set_theta2_2dot(theta2_2dot,k)
 
@@ -124,12 +162,16 @@ def rungeKutta2(Mtd,h,n,A,B):
         
         ############CALCULO PROXIMA ITERAÇÃO
         
+        # Vetor que será multiplicado por h e somado nas variaveis
         somas = np.array([(k1+k2)/2,(m1+m2)/2,(l1+l2)/2,(n1+n2)/2])
 
+        # Variaveis[k+1] = Variaveis[k] + h*(k1+k2)/2
         proxIterVar = np.add(Mtd.variaveis(k),np.multiply(somas,h))
         Mtd.set_variaveis(proxIterVar,k+1)
 
 def rungeKutta4(Mtd,h,n,A,B):
+    
+    # Definição das funções que serão utilizadas para calcular os parametros do método RK
     def kx(theta1_dot):
         return theta1_dot
 
@@ -142,16 +184,23 @@ def rungeKutta4(Mtd,h,n,A,B):
     def nx(theta1,theta2,theta1_dot,theta2_dot,theta1_2dotvar):
         return calc_theta2_2dot(theta1,theta2,theta1_dot,theta2_dot,theta1_2dotvar,B)
     
+
+    # Inicio loop que aplicará o algoritmo do método
     for k in range(n-1):
+        # Inicializando variaveis dessa iteração com nomes mais intuitivos para utilização de inputs nas funções
         [theta1,theta2,theta1_dot,theta2_dot] = Mtd.variaveis(k)
 
+
+        # Calculo das segundas derivadas que serão utilizadas nas funções dessa iteração
         theta1_2dot = calc_theta1_2dot(theta1,theta2,theta1_dot,theta2_dot,A)
         theta2_2dot = calc_theta2_2dot(theta1,theta2,theta1_dot,theta2_dot,theta1_2dot,B)
         
+        # Armazenamento das segundas derivadas para permitir a plotagem das mesmas no final
         Mtd.set_theta1_2dot(theta1_2dot,k)
         Mtd.set_theta2_2dot(theta2_2dot,k)
 
         ####### Calculo de #1
+        
         ############## K1
         k1 = kx(theta1_dot)
         ############## L1
@@ -161,6 +210,7 @@ def rungeKutta4(Mtd,h,n,A,B):
         ############## N1
         n1 = theta2_2dot
         ####### Calculo de #2
+
         ############## K2
         k2 = kx(theta1_dot+(h/2)*l1)
         ############## L2
@@ -192,14 +242,23 @@ def rungeKutta4(Mtd,h,n,A,B):
         n4 = nx(theta1+h*k3,theta2+h*m3,theta1_dot+h*l3,theta2_dot+h*n3,l4)
         
         ############CALCULO PROXIMA ITERAÇÃO
-        
+
+        # Vetor que será multiplicado por h e somado nas variaveis
         somas = np.array([(k1+2*k2+2*k3+k4)/6,(m1+2*m2+2*m3+m4)/6,(l1+2*l2+2*l3+l4)/6,(n1+2*n2+2*n3+n4)/6])
 
+        # Variaveis[k+1] = Variaveis[k] + h*(k1+2*k2+2*k3+k4)/6
         proxIterVar = np.add(Mtd.variaveis(k),np.multiply(somas,h))
         Mtd.set_variaveis(proxIterVar,k+1)
 
 
 def criaConstEqMov():
+    # O intuito dessa função é simplificar as expressões determinadas no enunciado do Exercício Programa
+    # de maneira a não ter que realizar todas as operações entre as constantes em todo calculo das segundas derivadas
+    # Assim não realizamos o mesmo calculo de maneira desnecessária
+    # O cálculo feito aqui é basicamente isso: 3*(2**2)*(X-3) ---> 12x - 36
+    
+    
+    ## Definição das constantes
     L1=2
     L2=2.5
     L2eixo=1.8
@@ -211,11 +270,15 @@ def criaConstEqMov():
     miIz=2.7
     R=0.3
     Vel=80/3.6
+
+    ## Definição de que variaveis as expressoes estão em função de, para funcionamento da função lambdify da biblioteca sympy
     theta1 = symbols('theta1')
     theta2 = symbols('theta2')
     theta1_dot = symbols('theta1_dot')
     theta2_2dot = symbols('theta2_2dot')
     theta1_2dotvar = symbols('theta1_2dotvar')
+
+    ## Escrita das expressões
     A0 = (L1**2)*L2*R*(m2*cos(2*theta1-2*theta2)-2*m1-m2)
     A1 = (L1**2)*L2*R*m2*sin(2*theta1-2*theta2)
     A2 = 2*L1*(L2**2)*R*m2*sin(theta1-theta2)
@@ -227,52 +290,69 @@ def criaConstEqMov():
     B2 = L1*L2*R*m2*sin(theta1-theta2)
     B3 = -miIz*Vel
     B4 = L2eixo*sin(theta2)*R*F2
+
+    # Criação do array e loop que lerá as expressões e criará as simplificações
     array = np.array([[A0,A1,A2,A3,A4,A5,B0,B1,B2,B3,B4],[0,0,0,0,0,0,0,0,0,0,0]])
     for i in range(11):
+
+        # Simplify observa os valores que determinei como variaveis e simplifica as expressões com base nisso
         temp = simplify(array[0,i])
+
+        # Lambdify torna as expressões simplificadas em funções de python dependentes de theta1 e theta2
         array[1,i] = lambdify((theta1,theta2),temp)
+
+    ############### Retornando 2 vetores, o primeiro com cada uma das expressões de A e o outro com cada expressão de B
     return array[1,:6],array[1, 6:]
 
 def main():
+    ## Definição de tamanhos utilizados na animação
     L1=2
     L2=2.5
     L2eixo=1.8
 
+    ## Definição das condicões iniciais
     theta1_i = 0
     theta2_i = 0
     theta1dot_i = 0.4
     theta2dot_i = -0.1
 
+    # Definição do intervalo de tempo da simulação
+    tf = 60
+    ti = 0
+
+    ## Aréa de imput do usuário, onde ele pode escolher o método a ser utilizado e o passo
     print("Selecione o método que deseja realizar: \n0 - Método de Euler \n1 - RK2 \n2 - RK4")
     metodo = int(input("Sua escolha: "))
     h = float(input("Defina o tamanho do passo que será utilizado: "))
-    tf = 60
-    ti = 0
-    n = int((tf-ti)/h)
-    A, B = criaConstEqMov()
+    
+    # Criação das variáveis, funções e atualização da matriz para inicio dos métodos
+
+    n = int((tf-ti)/h) # Tamanho dos vetores
+    A, B = criaConstEqMov() 
     MatrizTd = MatrizTudo(n)
     temp = calc_theta1_2dot(theta1_i,theta2_i,theta1dot_i,theta2dot_i,A)
     MatrizTd.cond_iniciais([theta1_i,theta2_i,theta1dot_i,theta2dot_i,temp,calc_theta2_2dot(theta1_i,theta2_i,theta1dot_i,theta2dot_i,temp,B)])
 
     if metodo == 0:
         print("Você selecionou método de Euler com passo",h)
-        eulerMethod(MatrizTd,h,n, A, B)
+        eulerMethod(MatrizTd, h, n, A, B)
         textoGrafico = 'Euler'
 
     elif metodo == 1:
-        rungeKutta2(MatrizTd,h,n,A,B)
+        rungeKutta2(MatrizTd, h, n, A, B)
         textoGrafico = 'Euler Modificado/RK2'
 
     elif metodo == 2:
-        rungeKutta2(MatrizTd,h,n,A,B)
+        rungeKutta2(MatrizTd, h, n, A, B)
         textoGrafico = 'RK4'
 
-    ############ Inicio plotagem e Animação
+    ############ Inicio Plotagem e Animação
     t = np.linspace(ti,tf,n) #vetor tempo
     
 
     plt.figure(1)
     plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=None, hspace=0.45)
+
     subplot(3,2,1)
     plt.title(r"${\Theta}_1$ para "+textoGrafico+ " com passo " + str(h))
     plt.xlabel('t (s)')
@@ -309,6 +389,9 @@ def main():
     plt.xlabel('tempo(s)')
     plt.ylabel(r"$\ddot{\Theta}_2$[rad/s^2]$")
     plt.plot(t,MatrizTd._matriz[5])
+
+
+    ## CALCULO DE DA POSIÇÃO DE CADA PONTO NECESSÁRIO PARA ANIMAÇÃO
 
     x1 = L1*np.sin(MatrizTd._matriz[0])
     y1 = -L1*np.cos(MatrizTd._matriz[0])
@@ -352,9 +435,6 @@ def main():
         time_text.set_text(time_template % (t[i]))
         return line, time_text
     
-
-    # ani = animation.FuncAnimation(fig, animate, np.arange(1, len(t)),
-    #                           interval=0.005, blit=True, init_func=init)
 
     ani = animation.FuncAnimation(fig, animate, np.arange(1, len(t)),
                               interval=5, blit=True, init_func=init)
