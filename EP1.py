@@ -265,7 +265,7 @@ def criaConstEqMov():
     m1=450
     m2=650
     g=9.81
-    F1=-0.5*m1*g
+    F1=0.5*m1*g
     F2=-0.5*m2*g
     miIz=2.7
     R=0.3
@@ -387,7 +387,7 @@ def main():
     subplot(3,2,6)
     plt.title(r"$\ddot{\Theta}_2$ para "+textoGrafico+ " com passo " + str(h))
     plt.xlabel('tempo(s)')
-    plt.ylabel(r"$\ddot{\Theta}_2$[rad/s^2]$")
+    plt.ylabel(r"$\ddot{\Theta}_2[rad/s^2]$")
     plt.plot(t,MatrizTd._matriz[5])
 
 
