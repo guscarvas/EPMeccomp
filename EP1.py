@@ -265,7 +265,7 @@ def criaConstEqMov():
     m1=450
     m2=650
     g=9.81
-    F1=0.5*m1*g
+    F1=-0.5*m1*g
     F2=-0.5*m2*g
     miIz=2.7
     R=0.3
@@ -343,7 +343,7 @@ def main():
         textoGrafico = 'Euler Modificado/RK2'
 
     elif metodo == 2:
-        rungeKutta2(MatrizTd, h, n, A, B)
+        rungeKutta4(MatrizTd, h, n, A, B)
         textoGrafico = 'RK4'
 
     ############ Inicio Plotagem e Animação
@@ -368,25 +368,25 @@ def main():
     
     subplot(3,2,3)
     plt.title(r"$\dot{\Theta}_1$ para "+textoGrafico+ " com passo " + str(h))
-    plt.xlabel('tempo(s)')
+    plt.xlabel('t (s)')
     plt.ylabel(r"$\dot{\Theta}_1$[rad/s]")
     plt.plot(t,MatrizTd._matriz[2])
     
     subplot(3,2,4)
     plt.title(r"$\dot{\Theta}_2$ para "+textoGrafico+ " com passo " + str(h))
-    plt.xlabel('tempo(s)')
+    plt.xlabel('t (s)')
     plt.ylabel(r"$\dot{\Theta}_2$[rad/s]")
     plt.plot(t,MatrizTd._matriz[3])
     
     subplot(3,2,5)
     plt.title(r"$\ddot{\Theta}_1$ para "+textoGrafico+ " com passo " + str(h))
-    plt.xlabel('tempo(s)')
+    plt.xlabel('t (s)')
     plt.ylabel(r"$\ddot{\Theta}_1[rad/s^2]$")
     plt.plot(t,MatrizTd._matriz[4])
     
     subplot(3,2,6)
     plt.title(r"$\ddot{\Theta}_2$ para "+textoGrafico+ " com passo " + str(h))
-    plt.xlabel('tempo(s)')
+    plt.xlabel('t (s)')
     plt.ylabel(r"$\ddot{\Theta}_2[rad/s^2]$")
     plt.plot(t,MatrizTd._matriz[5])
 
@@ -437,7 +437,7 @@ def main():
     
 
     ani = animation.FuncAnimation(fig, animate, np.arange(1, len(t)),
-                              interval=5, blit=True, init_func=init)
+                              interval=5, blit=True, init_func=init,save_count=50)
 
     
     # ani.save('Ep1.mp4', fps=15)
